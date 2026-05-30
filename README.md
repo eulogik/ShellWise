@@ -2,6 +2,8 @@
 
 Local AI terminal co-pilot. Understands plain English and shell commands alike — and executes them safely.
 
+By [eulogik](https://eulogik.com) · [Website](https://eulogik.github.io/ShellWise/) · [GitHub](https://github.com/eulogik/ShellWise)
+
 ```
      ┌──────────────────────────────────────────────────────────┐
      │                                                          │
