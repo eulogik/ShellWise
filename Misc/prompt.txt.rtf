@@ -1,0 +1,229 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2867
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fnil\fcharset0 HelveticaNeue;}
+{\colortbl;\red255\green255\blue255;\red233\green233\blue233;\red19\green19\blue19;}
+{\*\expandedcolortbl;;\cssrgb\c92941\c92941\c92941;\cssrgb\c9804\c9804\c9804;}
+\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\deftab720
+\pard\pardeftab720\partightenfactor0
+
+\f0\fs28 \cf2 \cb3 \expnd0\expndtw0\kerning0
+your logo was still shitty, I fixed it now its fine.\
+I see major issues like sw command with text parameter acts like it's in sw mode, the sw mode also doesn't behave as expected, when i say list files, it asks to exit sw mode while it could simply execute and show output inside sw mode itself. check following:\
+\
+  ~/Code/Shellwise sw \'9b list files\
+  thinking...llama_context: n_ctx_seq (2048) < n_ctx_train (32768) -- the full capacity of the m\
+odel will not be utilized\
+\
+   sw mode  'ls' is an interactive command.\
+  This command will take over the terminal.\
+  exit sw mode and run it? [Y/n]\
+README.md               shellwise               tests\
+pyproject.toml          shellwise.egg-info\
+\
+  exited sw mode.\
+\
+gautamkishore@Unknown_d2:b5:34:a2:33:fc Shellwise % sw "list files"\
+\
+  shellwise \'b7 local AI terminal co-pilot\
+  \uc0\u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \u9472 \
+\
+  thinking...llama_context: n_ctx_seq (2048) < n_ctx_train (32768) -- the full capacity of the m\
+odel will not be utilized\
+\
+   sw mode  'ls' is an interactive command.\
+  This command will take over the terminal.\
+  exit sw mode and run it? [Y/n]\
+README.md               shellwise               tests\
+pyproject.toml          shellwise.egg-info\
+\
+overall, it's not working as I wished. \
+\
+I have kept in Misc/tc.md, the conversation with codex while developing another similar project of mine that used openrouter i.e. termcoach, go through it and find out where do we lack in this one. prepare a detailed plan to make it Super Useful, usable and efficient. Viral worthy. \
+\
+test yourself termcoach with tc "list files & dirs with their sizes in this dir" or tc " create and open a text file in vi" or enter tc mode and try 4-5 different asks\
+Learn well whats better and whats not before planning.\
+\
+Answer from AI:\
+\
+Now I have a thorough understanding of both projects. Let me prepare the comprehensive plan.\
+\
+---\
+\
+## Shellwise Improvement Plan \'97 Making It Viral-Worthy\
+\
+### Root Cause Analysis: Why Shellwise Falls Short\
+\
+After studying TermCoach's source code and testing both tools, here are the **critical gaps**:\
+\
+| Area | TermCoach (tc) | Shellwise (sw) | Impact |\
+|------|---------------|----------------|--------|\
+| **Interactive loop** | `while(!explicitExit)` with readline restore on close | Simple `while True` with `input()` \'97 drops on readline close | **tc stays open, sw exits** |\
+| **Command routing** | `which` check \uc0\u8594  direct exec; fallback to AI | Heuristic `is_natural_language()` \'97 fragile | **sw misclassifies "list files" as shell cmd** |\
+| **TUI detection** | Dedicated `tui.ts` \'97 exits tc for vim/nano/top | `ls` wrongly classified as interactive | **sw exits on `ls` from AI** |\
+| **Safety** | Local classifier (READ/WRITE/CATASTROPHIC) + hard blocker | Trusts AI classification entirely | **tc blocks `rm -rf /` even if AI suggests it** |\
+| **Execution** | `spawn` with arg arrays + shell syntax detection | `subprocess.Popen(shell=True)` | **tc safer, sw vulnerable to injection** |\
+| **Context** | cwd listing, git branch/dirty, pkg manager, history | OS, arch, distro, cwd only | **tc gives AI much richer context** |\
+| **Error handling** | Try/catch per input \uc0\u8594  prompt stays alive | Minimal \'97 crashes propagate | **tc survives AI failures** |\
+| **Caching** | JSONL cache with TTL, hit counting, refresh on fail | None | **tc faster, sw repeats AI calls** |\
+| **Config** | `~/.shellwise/config.json` + Zod validation + dotenv | None | **tc configurable, sw hardcoded** |\
+| **Model reliability** | Model rotation on 429, retry on transient, Zod validation | Single model, no retry, fragile JSON parse | **tc more resilient** |\
+| **UI/UX** | Colorful banner, git-aware prompt, proper spinner | Basic banner, static prompt, no spinner | **tc looks polished** |\
+| **Tests** | 35+ unit + integration tests | 67 tests but missing core/model coverage | Both decent, tc more integration-focused |\
+\
+---\
+\
+### Phase 1: Critical Fixes (Must-Have for Usability)\
+\
+#### 1.1 Fix Interactive Mode \'97 Never Exit Unexpectedly\
+**Files:** `shellwise/__main__.py`, `shellwise/core.py`\
+- Wrap interactive loop in outer `while True` that restores readline on unexpected close\
+- Add try/except around each input processing \'97 errors show message, return to prompt\
+- Only exit on explicit commands (`exit`, `quit`, `bye`, `q`, `Ctrl+D`)\
+- **Reference:** `TermCoach/src/modes/interactive.ts` lines 165-336\
+\
+#### 1.2 Fix Command Routing \'97 Direct Commands vs AI Fallback\
+**Files:** `shellwise/ai.py`, `shellwise/core.py`\
+- Replace fragile `is_natural_language()` heuristic with `which`-based detection\
+- If first token is a valid command \uc0\u8594  execute directly (streaming output)\
+- If command not found \uc0\u8594  fall back to AI translation\
+- Support `ai <text>` prefix to force AI mode\
+- **Reference:** `TermCoach/src/shell/known-commands.ts`\
+\
+#### 1.3 Fix TUI Detection \'97 Don't Exit on `ls`\
+**Files:** `shellwise/ai.py`\
+- Create dedicated `INTERACTIVE_TUI_CMDS` set (vim, nano, top, htop, less, man, ssh, tmux, etc.)\
+- Only prompt to exit sw mode for actual TUI commands\
+- `ls`, `du`, `find`, `grep` etc. should execute and show output inside sw mode\
+- **Reference:** `TermCoach/src/core/tui.ts`\
+\
+#### 1.4 Add Local Safety Classifier\
+**Files:** New `shellwise/classifier.py`\
+- Local READ/WRITE/CRITICAL classification independent of AI\
+- Hard-block catastrophic patterns (`rm -rf /`, `dd if=...of=/dev/sdX`, fork bombs)\
+- Re-classify AI-suggested commands locally before execution\
+- **Reference:** `TermCoach/src/core/classifier.ts`, `TermCoach/src/core/safety.ts`\
+\
+#### 1.5 Fix `sw "query"` One-Shot Mode\
+**Files:** `shellwise/__main__.py`\
+- One-shot mode should execute and return to shell prompt (current behavior is correct)\
+- But add proper error handling \'97 don't crash on AI failure\
+- Show friendly error message and exit with code 1\
+\
+---\
+\
+### Phase 2: Reliability & Performance\
+\
+#### 2.1 Add Response Caching\
+**Files:** New `shellwise/cache.py`\
+- JSONL cache at `~/.shellwise/cache.jsonl`\
+- Key = hash(cwd + normalized_query)\
+- TTL: 24h for READ commands, 1h for WRITE commands\
+- Auto-refresh cached plan if execution fails\
+- Sanitize sensitive data (passwords, tokens, API keys)\
+- **Reference:** `TermCoach/src/core/cache.ts`\
+\
+#### 2.2 Improve Model Query Reliability\
+**Files:** `shellwise/model.py`, `shellwise/ai.py`\
+- Add retry logic for transient failures\
+- Support model fallback list (try next model on timeout/429)\
+- Use `llama_cpp.Llama.create_chat_completion()` properly (already done)\
+- Better JSON extraction with regex (already done)\
+- **Reference:** `TermCoach/src/core/interpreter.ts` lines 209-331\
+\
+#### 2.3 Richer Shell Context\
+**Files:** `shellwise/ai.py`\
+- Include `ls -la` output (first 50 lines) in system prompt\
+- Detect git branch and dirty status\
+- Detect package manager from lock files (package-lock.json, Cargo.toml, etc.)\
+- Include recent command history (last 10)\
+- **Reference:** `TermCoach/src/core/context.ts`\
+\
+#### 2.4 Safer Command Execution\
+**Files:** `shellwise/executor.py`\
+- Use `subprocess.Popen` with arg arrays for simple commands (no `shell=True`)\
+- Only use shell mode for commands with pipes/globs/redirections\
+- Proper timeout handling\
+- **Reference:** `TermCoach/src/core/executor.ts`\
+\
+---\
+\
+### Phase 3: Configuration & Polish\
+\
+#### 3.1 Add Configuration System\
+**Files:** New `shellwise/config.py`\
+- `~/.shellwise/config.json` for settings\
+- Support `NO_COLOR`, model selection, timeout, cache TTL\
+- Environment variable overrides\
+- **Reference:** `TermCoach/src/config.ts`\
+\
+#### 3.2 Better UI/UX\
+**Files:** `shellwise/display.py`\
+- Colorful banner (use the user's fixed ASCII logo)\
+- Git-aware prompt: `~/project (main) sw \'9b`\
+- Proper spinner for AI thinking (without interfering with readline)\
+- Color-coded output (green for success, red for errors, yellow for warnings)\
+- **Reference:** `TermCoach/src/ui/banner.ts`, `TermCoach/src/ui/prompt.ts`\
+\
+#### 3.3 Add `--dry-run` to Interactive Mode\
+**Files:** `shellwise/__main__.py`, `shellwise/core.py`\
+- Already supported in one-shot, extend to interactive\
+- Show what would be executed without running\
+\
+#### 3.4 Shell Integration\
+**Files:** New `shellwise/shell_integration.py`\
+- `sw install-shell` command\
+- Install `sw` wrapper function in `.zshrc`, `.bashrc`, `.config/fish/config.fish`\
+- **Reference:** `TermCoach/src/shell/integration.ts`\
+\
+---\
+\
+### Phase 4: Testing & Quality\
+\
+#### 4.1 Add Integration Tests\
+**Files:** `tests/integration/`\
+- Test full interactive flow (input \uc0\u8594  output \u8594  prompt stays)\
+- Test one-shot mode with various queries\
+- Test error recovery (AI failure \uc0\u8594  prompt stays)\
+- Test TUI handoff\
+- **Reference:** `TermCoach/tests/integration/`\
+\
+#### 4.2 Add More Unit Tests\
+**Files:** `tests/test_classifier.py`, `tests/test_cache.py`, `tests/test_config.py`\
+- Test local safety classifier\
+- Test cache TTL and refresh\
+- Test config loading and merging\
+\
+---\
+\
+### Implementation Order (Recommended)\
+\
+1. **Fix interactive mode loop** (1.1) \'97 Most critical, fixes the "exits after command" bug\
+2. **Fix command routing** (1.2) \'97 Fixes "list files" classification\
+3. **Fix TUI detection** (1.3) \'97 Fixes "ls exits sw mode" bug\
+4. **Add local safety classifier** (1.4) \'97 Critical safety improvement\
+5. **Add error handling** (1.5) \'97 Prevents crashes\
+6. **Add caching** (2.1) \'97 Performance improvement\
+7. **Richer context** (2.3) \'97 Better AI responses\
+8. **Safer execution** (2.4) \'97 Security improvement\
+9. **Configuration** (3.1) \'97 User customization\
+10. **UI polish** (3.2) \'97 Viral-worthy appearance\
+11. **Shell integration** (3.4) \'97 Easy install\
+12. **Tests** (4.1, 4.2) \'97 Quality gate\
+\
+---\
+\
+### Expected Outcome\
+\
+After all phases, `sw` will:\
+- **Stay in interactive mode** until user types `exit`/`bye`/`Ctrl+D`\
+- **Run `ls` directly** and show output inside sw mode (no exit)\
+- **Translate "list files"** via AI and execute inside sw mode\
+- **Block `rm -rf /`** even if AI suggests it\
+- **Cache responses** for faster repeated queries\
+- **Show git branch** in prompt\
+- **Look polished** with colorful banner\
+- **Survive AI failures** without crashing\
+- **Support `sw install-shell`** for easy setup\
+\
+\
+\uc0\u8203 }

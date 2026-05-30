@@ -1,0 +1,234 @@
+Metadata-Version: 2.4
+Name: shellwise
+Version: 0.2.0
+Summary: Local AI terminal co-pilot — understands plain English, executes safely
+License: MIT
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+Provides-Extra: cpu
+Requires-Dist: llama-cpp-python; extra == "cpu"
+Provides-Extra: gpu
+Requires-Dist: llama-cpp-python; extra == "gpu"
+Provides-Extra: test
+Requires-Dist: pytest>=7.0; extra == "test"
+Requires-Dist: pytest-mock>=3.0; extra == "test"
+Provides-Extra: dev
+Requires-Dist: shellwise[cpu,test]; extra == "dev"
+Requires-Dist: ruff; extra == "dev"
+Requires-Dist: mypy; extra == "dev"
+
+# shellwise
+
+Local AI terminal co-pilot. Understands plain English and shell commands alike — and executes them safely.
+
+```
+  ┌─────────────────────────────────────────┐
+  │                                         │
+  │   ██████  ████  ████                    │
+  │   ██      ████  ████                    │
+  │   ██████  ██████████                    │
+  │         ██      ████                    │
+  │   ██████      ██  ████                  │
+  │                                         │
+  └─────────────────────────────────────────┘
+
+  shellwise v0.1.0  —  your local AI terminal co-pilot
+```
+
+## Features
+
+- **Hybrid mode** — type shell commands or plain English, `sw` handles both
+- **Safety tiers** — read runs instantly; write asks Y/n; critical requires typing YES
+- **Interactive command detection** — vi, ssh, top etc. prompt to exit sw mode first
+- **Context-aware** — knows your OS, distro, package manager, and current directory
+- **Fully offline** — runs via llama-cpp-python, no cloud, no API keys
+- **Undo log** — write/critical commands logged to `~/.shellwise/undo.log`
+- **History** — all executed commands saved to `~/.shellwise/history`
+- **Explain mode** — break down what any command does
+- **File-safe logging** — concurrent writes protected with file locking
+
+---
+
+## Install
+
+```bash
+# 1. Install shellwise with the CPU backend
+pip install "shellwise[cpu]"
+
+# GPU (CUDA) — much faster on systems with a GPU
+CMAKE_ARGS="-DGGML_CUDA=on" pip install "shellwise[gpu]"
+
+# 2. First run downloads the model automatically (~400 MB, one time)
+sw
+```
+
+The model (`qwen2.5-0.5b-instruct-q4_k_m.gguf`) downloads to `~/.shellwise/models/` on first use.
+
+### No llama-cpp-python? Use Ollama instead
+
+shellwise automatically falls back to Ollama if llama-cpp-python isn't installed:
+
+```bash
+curl -fsSL https://ollama.com/install.sh | sh
+ollama pull qwen2:0.5b
+pip install shellwise   # without [cpu]
+sw
+```
+
+### Development install
+
+```bash
+git clone https://github.com/yourname/shellwise.git
+cd shellwise
+pip install -e ".[dev]"
+pytest          # run tests
+```
+
+---
+
+## Usage
+
+### `sw` — interactive mode
+
+```
+$ sw
+
+  shellwise v0.1.0  —  your local AI terminal co-pilot
+
+  How to use:
+  · type any shell command      → runs directly
+  · type in plain English       → AI generates & runs it
+  · prefix with ?               → force AI mode
+  · sw --explain <cmd>          → explain a command
+  · type exit or Ctrl+D         → leave sw mode
+
+  ~/projects sw ›
+```
+
+In sw mode:
+- `ls -la` → runs directly, streams output
+- `find large files over 500MB` → AI generates command, shows it, executes
+- `create and open a readme in vim` → AI detects interactive, asks to exit sw mode
+- `--explain "find . -name '*.log' -mtime +7"` → explains the command inline
+- `exit` or `Ctrl+D` → leave sw mode
+
+### One-shot
+
+```bash
+sw "show disk usage by folder"
+sw "find all python files modified today"
+sw ls -la                           # shell passthrough
+sw --explain "awk '{print \$2}'"    # explain a command
+sw --dry-run "clean up docker"      # preview without running
+sw --history                        # recent command history
+sw --model phi3:mini "..."          # use a bigger model
+```
+
+---
+
+## Safety tiers
+
+| Type | Colour | Behaviour |
+|------|--------|-----------|
+| `read` | white | Runs immediately, streams output |
+| `write` | yellow ⚠ | Shows impact → `Y/n` confirmation |
+| `critical` | red ✖ | Shows WARNING → must type `YES` |
+| `interactive` | blue | Asks to exit sw mode → runs in full terminal |
+
+### Example — write command
+
+```
+  $ rm -rf ./node_modules
+  ⚠ impact  Permanently deletes the node_modules directory in the current folder.
+
+  run this? [Y/n]
+```
+
+### Example — critical command
+
+```
+  $ dd if=/dev/zero of=/dev/sdb bs=1M
+  ██ WARNING  Overwrites the entire /dev/sdb disk with zeros. Irreversible data loss.
+
+  This action may be irreversible.
+  type YES to confirm:
+```
+
+### Example — interactive command
+
+```
+  $ vim README.md
+
+  ⬛ sw mode  'vim' is an interactive command.
+  This command will take over the terminal.
+  exit sw mode and run it? [Y/n]
+```
+
+---
+
+## Files
+
+| Path | Contents |
+|------|----------|
+| `~/.shellwise/models/` | Downloaded GGUF model |
+| `~/.shellwise/history` | Tab-separated command history |
+| `~/.shellwise/undo.log` | Write/critical commands with impact notes |
+
+---
+
+## Models
+
+| Model | Size | RAM | Quality |
+|-------|------|-----|---------|
+| `qwen2.5-0.5b-instruct-q4_k_m.gguf` | ~400 MB | ~600 MB | default, fast |
+| `phi3:mini` (via Ollama) | 2.2 GB | ~2.5 GB | better on complex tasks |
+
+To use a different model:
+```bash
+sw --model my-model.gguf "..."
+```
+
+Place custom `.gguf` files in `~/.shellwise/models/`.
+
+---
+
+## Project structure
+
+```
+shellwise/
+├── shellwise/
+│   ├── __init__.py      version
+│   ├── __main__.py      CLI entry point, sw mode, one-shot, flags
+│   ├── ai.py            system prompt, intent detection, model queries
+│   ├── core.py          shared processing loop (AI + shell passthrough)
+│   ├── display.py       terminal output, banner, colors, confirmations
+│   ├── executor.py      command execution, cd handling, history/undo logging
+│   └── model.py         llama-cpp-python backend, auto-download, Ollama fallback
+├── tests/
+│   ├── test_ai.py
+│   ├── test_core.py
+│   ├── test_display.py
+│   ├── test_executor.py
+│   └── test_model.py
+├── pyproject.toml
+└── README.md
+```
+
+---
+
+## Running tests
+
+```bash
+pip install -e ".[test]"
+pytest              # run all tests
+pytest -v           # verbose output
+pytest tests/test_ai.py  # run specific module tests
+```
+
+---
+
+## Environment variables
+
+| Variable | Effect |
+|----------|--------|
+| `NO_COLOR` | Disables colored output |

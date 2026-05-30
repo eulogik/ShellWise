@@ -1,0 +1,15 @@
+
+[cpu]
+llama-cpp-python
+
+[dev]
+shellwise[cpu,test]
+ruff
+mypy
+
+[gpu]
+llama-cpp-python
+
+[test]
+pytest>=7.0
+pytest-mock>=3.0

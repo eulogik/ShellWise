@@ -1,0 +1,3 @@
+[console_scripts]
+shellwise = shellwise.__main__:main
+sw = shellwise.__main__:main

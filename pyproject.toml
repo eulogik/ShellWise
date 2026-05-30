@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "shellwise"
+version = "0.2.0"
+description = "Local AI terminal co-pilot — understands plain English, executes safely"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+
+dependencies = [
+    # llama-cpp-python is the primary backend — zero-config, self-contained.
+    # It's listed as optional here because it has platform-specific wheels.
+    # Users without it automatically fall back to Ollama.
+]
+
+[project.optional-dependencies]
+# Standard CPU install:
+#   pip install "shellwise[cpu]"
+# GPU (CUDA):
+#   CMAKE_ARGS="-DGGML_CUDA=on" pip install "shellwise[gpu]"
+cpu = ["llama-cpp-python"]
+gpu = ["llama-cpp-python"]
+test = ["pytest>=7.0", "pytest-mock>=3.0"]
+dev = ["shellwise[cpu,test]", "ruff", "mypy"]
+
+[project.scripts]
+sw = "shellwise.__main__:main"
+shellwise = "shellwise.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
