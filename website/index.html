@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>shellwise — Your AI Terminal Co-Pilot</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0b;
+            --bg-card: #111113;
+            --bg-card-hover: #18181b;
+            --border: #27272a;
+            --text: #fafafa;
+            --text-dim: #a1a1aa;
+            --cyan: #22d3ee;
+            --cyan-dim: #0e7490;
+            --green: #34d399;
+            --yellow: #fbbf24;
+            --red: #f87171;
+            --purple: #a78bfa;
+            --glow: rgba(34, 211, 238, 0.15);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .mono { font-family: 'JetBrains Mono', monospace; }
+
+        /* ── NAV ─────────────────────────────────────────────── */
+        nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            padding: 1rem 2rem;
+            display: flex; align-items: center; justify-content: space-between;
+            background: rgba(10, 10, 11, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+        }
+        .nav-logo {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700; font-size: 1.1rem; color: var(--cyan);
+            text-decoration: none;
+        }
+        .nav-links { display: flex; gap: 2rem; align-items: center; }
+        .nav-links a {
+            color: var(--text-dim); text-decoration: none; font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+        .nav-links a:hover { color: var(--text); }
+        .nav-cta {
+            background: var(--cyan) !important; color: var(--bg) !important;
+            padding: 0.5rem 1.2rem; border-radius: 8px; font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s !important;
+        }
+        .nav-cta:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(34, 211, 238, 0.3);
+        }
+
+        /* ── HERO ────────────────────────────────────────────── */
+        .hero {
+            min-height: 100vh; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 8rem 2rem 4rem; text-align: center;
+            position: relative;
+        }
+        .hero::before {
+            content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(34, 211, 238, 0.08) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .hero-badge {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            background: var(--bg-card); border: 1px solid var(--border);
+            padding: 0.4rem 1rem; border-radius: 100px; font-size: 0.8rem;
+            color: var(--text-dim); margin-bottom: 2rem;
+            animation: fadeUp 0.6s ease;
+        }
+        .hero-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+        .hero-ascii {
+            font-size: clamp(0.55rem, 1.6vw, 0.95rem);
+            line-height: 1.2; color: var(--cyan); margin-bottom: 1.5rem;
+            text-shadow: 0 0 30px rgba(34, 211, 238, 0.3);
+            animation: fadeUp 0.6s ease 0.05s both;
+            white-space: pre;
+            font-feature-settings: "liga" 0, "calt" 0;
+            font-variant-ligatures: none;
+            font-family: 'Courier New', 'Lucida Console', 'Consolas', monospace;
+            letter-spacing: 0;
+            overflow-x: auto;
+        }
+        .hero h1 {
+            font-size: clamp(2.5rem, 6vw, 4.5rem); font-weight: 800;
+            line-height: 1.1; margin-bottom: 1.5rem;
+            animation: fadeUp 0.6s ease 0.1s both;
+        }
+        .hero h1 .gradient {
+            background: linear-gradient(135deg, var(--cyan), var(--purple));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .hero p {
+            font-size: 1.2rem; color: var(--text-dim); max-width: 550px;
+            margin-bottom: 2.5rem;
+            animation: fadeUp 0.6s ease 0.2s both;
+        }
+        .hero-buttons {
+            display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;
+            animation: fadeUp 0.6s ease 0.3s both;
+        }
+        .btn-primary {
+            background: var(--cyan); color: var(--bg); padding: 0.8rem 2rem;
+            border-radius: 10px; font-weight: 700; font-size: 1rem;
+            text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(34, 211, 238, 0.3);
+        }
+        .btn-secondary {
+            background: var(--bg-card); color: var(--text); padding: 0.8rem 2rem;
+            border: 1px solid var(--border); border-radius: 10px; font-weight: 600;
+            font-size: 1rem; text-decoration: none; display: inline-flex;
+            align-items: center; gap: 0.5rem; transition: border-color 0.2s;
+        }
+        .btn-secondary:hover { border-color: var(--cyan); }
+
+        /* ── TERMINAL DEMO ──────────────────────────────────── */
+        .terminal-wrapper {
+            margin-top: 4rem; width: 100%; max-width: 700px;
+            animation: fadeUp 0.8s ease 0.4s both;
+        }
+        .terminal {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 12px; overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 80px var(--glow);
+        }
+        .terminal-header {
+            display: flex; align-items: center; gap: 0.5rem;
+            padding: 0.8rem 1rem; border-bottom: 1px solid var(--border);
+        }
+        .terminal-dot { width: 12px; height: 12px; border-radius: 50%; }
+        .terminal-dot.r { background: #ff5f57; }
+        .terminal-dot.y { background: #ffbd2e; }
+        .terminal-dot.g { background: #28c840; }
+        .terminal-title {
+            margin-left: 0.5rem; color: var(--text-dim); font-size: 0.8rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .terminal-body {
+            padding: 1.5rem; font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem; line-height: 1.8; min-height: 200px;
+        }
+        .term-prompt { color: var(--cyan); }
+        .term-input { color: var(--text); }
+        .term-output { color: var(--text-dim); }
+        .term-success { color: var(--green); }
+        .term-warning { color: var(--yellow); }
+        .term-thinking { color: var(--purple); }
+        .term-cursor {
+            display: inline-block; width: 8px; height: 16px;
+            background: var(--cyan); animation: blink 1s step-end infinite;
+            vertical-align: text-bottom;
+        }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        /* ── FEATURES ────────────────────────────────────────── */
+        .features {
+            padding: 6rem 2rem; max-width: 1100px; margin: 0 auto;
+        }
+        .section-label {
+            font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;
+            color: var(--cyan); text-transform: uppercase; letter-spacing: 0.1em;
+            margin-bottom: 1rem;
+        }
+        .section-title {
+            font-size: clamp(2rem, 4vw, 3rem); font-weight: 800;
+            margin-bottom: 1rem; line-height: 1.2;
+        }
+        .section-desc {
+            color: var(--text-dim); font-size: 1.1rem; max-width: 600px;
+            margin-bottom: 3rem;
+        }
+        .features-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        .feature-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 12px; padding: 1.5rem;
+            transition: border-color 0.3s, transform 0.3s;
+        }
+        .feature-card:hover {
+            border-color: var(--cyan); transform: translateY(-4px);
+        }
+        .feature-icon {
+            width: 40px; height: 40px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; margin-bottom: 1rem;
+        }
+        .feature-icon.cyan { background: rgba(34, 211, 238, 0.1); color: var(--cyan); }
+        .feature-icon.green { background: rgba(52, 211, 153, 0.1); color: var(--green); }
+        .feature-icon.yellow { background: rgba(251, 191, 36, 0.1); color: var(--yellow); }
+        .feature-icon.red { background: rgba(248, 113, 113, 0.1); color: var(--red); }
+        .feature-icon.purple { background: rgba(167, 139, 250, 0.1); color: var(--purple); }
+        .feature-card h3 { font-size: 1.1rem; margin-bottom: 0.5rem; }
+        .feature-card p { color: var(--text-dim); font-size: 0.9rem; }
+
+        /* ── HOW IT WORKS ────────────────────────────────────── */
+        .how-it-works {
+            padding: 6rem 2rem; max-width: 1100px; margin: 0 auto;
+        }
+        .steps {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem; counter-reset: step;
+        }
+        .step {
+            position: relative; padding: 2rem;
+            border-left: 2px solid var(--border); padding-left: 2rem;
+            counter-increment: step;
+        }
+        .step::before {
+            content: counter(step); position: absolute; left: -14px; top: 2rem;
+            width: 28px; height: 28px; border-radius: 50%;
+            background: var(--bg); border: 2px solid var(--cyan);
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;
+            color: var(--cyan); font-weight: 700;
+        }
+        .step h3 { margin-bottom: 0.5rem; font-size: 1.1rem; }
+        .step p { color: var(--text-dim); font-size: 0.9rem; }
+
+        /* ── CODE BLOCK ──────────────────────────────────────── */
+        .install-section {
+            padding: 6rem 2rem; max-width: 700px; margin: 0 auto; text-align: center;
+        }
+        .code-block {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 12px; padding: 1.5rem; text-align: left;
+            font-family: 'JetBrains Mono', monospace; font-size: 0.9rem;
+            margin-top: 2rem;
+        }
+        .code-line { margin-bottom: 0.5rem; }
+        .code-comment { color: var(--text-dim); }
+        .code-cmd { color: var(--cyan); }
+        .code-flag { color: var(--green); }
+        .code-str { color: var(--yellow); }
+        .copy-btn {
+            background: var(--bg-card); border: 1px solid var(--border);
+            color: var(--text-dim); padding: 0.4rem 0.8rem; border-radius: 6px;
+            cursor: pointer; font-size: 0.75rem; font-family: 'JetBrains Mono', monospace;
+            transition: all 0.2s; float: right; margin-top: -2.5rem;
+        }
+        .copy-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+
+        /* ── SAFETY TABLE ────────────────────────────────────── */
+        .safety-section {
+            padding: 6rem 2rem; max-width: 800px; margin: 0 auto;
+        }
+        .safety-table {
+            width: 100%; border-collapse: collapse; margin-top: 2rem;
+            background: var(--bg-card); border-radius: 12px; overflow: hidden;
+            border: 1px solid var(--border);
+        }
+        .safety-table th, .safety-table td {
+            padding: 1rem 1.5rem; text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        .safety-table th {
+            background: var(--bg-card); font-weight: 600;
+            font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;
+            text-transform: uppercase; letter-spacing: 0.05em;
+            color: var(--text-dim);
+        }
+        .safety-table td { font-size: 0.9rem; }
+        .safety-table tr:last-child td { border-bottom: none; }
+        .safety-tag {
+            display: inline-block; padding: 0.2rem 0.6rem; border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace; font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .tag-read { background: rgba(255,255,255,0.1); color: var(--text); }
+        .tag-write { background: rgba(251, 191, 36, 0.15); color: var(--yellow); }
+        .tag-critical { background: rgba(248, 113, 113, 0.15); color: var(--red); }
+
+        /* ── FOOTER ──────────────────────────────────────────── */
+        footer {
+            padding: 4rem 2rem; text-align: center;
+            border-top: 1px solid var(--border);
+        }
+        footer p { color: var(--text-dim); font-size: 0.9rem; }
+        footer a { color: var(--cyan); text-decoration: none; }
+        footer .logo {
+            font-family: 'JetBrains Mono', monospace; font-weight: 700;
+            font-size: 1.2rem; color: var(--cyan); margin-bottom: 1rem;
+        }
+
+        /* ── ANIMATIONS ──────────────────────────────────────── */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+
+        /* ── RESPONSIVE ──────────────────────────────────────── */
+        @media (max-width: 768px) {
+            nav { padding: 0.8rem 1rem; }
+            .nav-links { gap: 1rem; }
+            .nav-links a:not(.nav-cta) { display: none; }
+            .hero { padding: 6rem 1.5rem 3rem; }
+            .features, .how-it-works, .safety-section, .install-section { padding: 4rem 1.5rem; }
+            .features-grid { grid-template-columns: 1fr; }
+            .steps { grid-template-columns: 1fr; }
+            .terminal-body { font-size: 0.75rem; }
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a href="#" class="nav-logo mono">sw</a>
+    <div class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#how">How it works</a>
+        <a href="#safety">Safety</a>
+        <a href="https://github.com/gkishore2/Shellwise" class="nav-cta" target="_blank">Get Started</a>
+    </div>
+</nav>
+
+<!-- ── HERO ────────────────────────────────────────────── -->
+<section class="hero">
+    <div class="hero-badge mono"><span class="dot"></span> by <a href="https://eulogik.com" target="_blank" style="color: var(--cyan); text-decoration: none;">eulogik</a> &middot; v0.2.0 — Local safety classifier</div>
+    <pre class="hero-ascii mono" aria-hidden="true">     ┌──────────────────────────────────────────────────────────┐
+     │                                                          │
+   ███████╗██╗  ██╗███████╗██╗     ██╗     ██╗    ██╗██╗███████╗███████╗
+   ██╔════╝██║  ██║██╔════╝██║     ██║     ██║    ██║██║██╔════╝██╔════╝
+ ███████╗███████║█████╗  ██║     ██║     ██║ █╗ ██║██║███████╗█████╗
+ ╚════██║██╔══██║██╔══╝  ██║     ██║     ██║███╗██║██║╚════██║██╔══╝
+   ███████║██║  ██║███████╗███████╗███████╗╚███╔███╔╝██║███████║███████╗
+   ╚══════╝╚═╝  ╚═╝╚══════╝╚══════╝╚══════╝ ╚══╝╚══╝ ╚═╝╚══════╝╚══════╝
+      │                                                          │
+      └──────────────────────────────────────────────────────────┘</pre>
+    <h1>Talk to your terminal.<br><span class="gradient">Get things done.</span></h1>
+    <p>shellwise understands plain English and shell commands alike. Type naturally, review the plan, execute safely — all offline.</p>
+    <div class="hero-buttons">
+        <a href="https://github.com/gkishore2/Shellwise" class="btn-primary" target="_blank">
+            Install with pip
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+        <a href="https://github.com/gkishore2/Shellwise" class="btn-secondary" target="_blank">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+            Star on GitHub
+        </a>
+    </div>
+
+    <div class="terminal-wrapper">
+        <div class="terminal">
+            <div class="terminal-header">
+                <div class="terminal-dot r"></div>
+                <div class="terminal-dot y"></div>
+                <div class="terminal-dot g"></div>
+                <span class="terminal-title">~/Code/MyProject — sw</span>
+            </div>
+            <div class="terminal-body" id="demo">
+                <div class="term-prompt">~/Code/MyProject (main) sw ›</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ── FEATURES ────────────────────────────────────────── -->
+<section class="features" id="features">
+    <div class="section-label mono">Features</div>
+    <div class="section-title">Everything you need.<br>Nothing you don't.</div>
+    <div class="section-desc">Built for developers who want the power of AI without the friction.</div>
+
+    <div class="features-grid">
+        <div class="feature-card fade-in">
+            <div class="feature-icon cyan">🧠</div>
+            <h3>Smart Command Routing</h3>
+            <p>Known commands run instantly. Natural language goes to AI. Zero friction.</p>
+        </div>
+        <div class="feature-card fade-in">
+            <div class="feature-icon green">🔒</div>
+            <h3>Local Safety Classifier</h3>
+            <p>Independently classifies every command — even AI-generated ones. Dangerous commands are blocked locally.</p>
+        </div>
+        <div class="feature-card fade-in">
+            <div class="feature-icon yellow">⚡</div>
+            <h3>Response Caching</h3>
+            <p>Repeated queries served instantly from cache. Smart TTL keeps responses fresh.</p>
+        </div>
+        <div class="feature-card fade-in">
+            <div class="feature-icon purple">🌐</div>
+            <h3>Rich Context</h3>
+            <p>Knows your OS, git branch, package manager, directory contents — generates better commands.</p>
+        </div>
+        <div class="feature-card fade-in">
+            <div class="feature-icon red">🛡️</div>
+            <h3>TUI Detection</h3>
+            <p>Automatically detects interactive apps (vim, ssh, tmux) and offers to hand off to your shell.</p>
+        </div>
+        <div class="feature-card fade-in">
+            <div class="feature-icon cyan">📦</div>
+            <h3>Fully Offline</h3>
+            <p>Runs via llama-cpp-python. No cloud, no API keys, no data leaves your machine.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ── HOW IT WORKS ─────────────────────────────────────── -->
+<section class="how-it-works" id="how">
+    <div class="section-label mono">How it works</div>
+    <div class="section-title">Three steps. That's it.</div>
+    <div class="section-desc">No configuration, no API keys, no learning curve.</div>
+
+    <div class="steps">
+        <div class="step fade-in">
+            <h3>Install</h3>
+            <p class="mono" style="color: var(--cyan); font-size: 0.85rem;">pip install "shellwise[cpu]"</p>
+            <p style="margin-top: 0.5rem;">One command. Downloads the model on first run (~400 MB, one time).</p>
+        </div>
+        <div class="step fade-in">
+            <h3>Type naturally</h3>
+            <p style="margin-top: 0.5rem;">Say what you want in plain English. shellwise translates it to the right command.</p>
+        </div>
+        <div class="step fade-in">
+            <h3>Review & execute</h3>
+            <p style="margin-top: 0.5rem;">See the command, confirm if needed, done. Everything stays in your terminal.</p>
+        </div>
+    </div>
+</section>
+
+<!-- ── SAFETY ──────────────────────────────────────────── -->
+<section class="safety-section" id="safety">
+    <div class="section-label mono">Safety</div>
+    <div class="section-title">Your terminal. Your rules.</div>
+    <div class="section-desc">shellwise classifies every command independently — even if the AI suggests something dangerous.</div>
+
+    <table class="safety-table">
+        <thead>
+            <tr>
+                <th>Type</th>
+                <th>Behaviour</th>
+                <th>Example</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><span class="safety-tag tag-read">read</span></td>
+                <td>Runs immediately, streams output</td>
+                <td class="mono" style="color: var(--text-dim);">ls, cat, grep, du</td>
+            </tr>
+            <tr>
+                <td><span class="safety-tag tag-write">write</span></td>
+                <td>Shows impact, asks for confirmation</td>
+                <td class="mono" style="color: var(--text-dim);">mkdir, cp, mv, touch</td>
+            </tr>
+            <tr>
+                <td><span class="safety-tag tag-critical">critical</span></td>
+                <td>Locally blocked — never executes</td>
+                <td class="mono" style="color: var(--text-dim);">rm -rf /, dd, mkfs</td>
+            </tr>
+        </tbody>
+    </table>
+</section>
+
+<!-- ── INSTALL ──────────────────────────────────────────── -->
+<section class="install-section">
+    <div class="section-label mono">Get started</div>
+    <div class="section-title">Up and running in 30 seconds</div>
+
+    <div class="code-block">
+        <button class="copy-btn" onclick="copyCode()">Copy</button>
+        <div class="code-line"><span class="code-comment"># Install with CPU backend</span></div>
+        <div class="code-line"><span class="code-cmd">pip install</span> <span class="code-str">"shellwise[cpu]"</span></div>
+        <div class="code-line" style="margin-top: 1rem;"><span class="code-comment"># GPU (CUDA) — much faster</span></div>
+        <div class="code-line"><span class="code-cmd">CMAKE_ARGS</span>=<span class="code-str">"-DGGML_CUDA=on"</span> <span class="code-cmd">pip install</span> <span class="code-str">"shellwise[cpu]"</span></div>
+        <div class="code-line" style="margin-top: 1rem;"><span class="code-comment"># First run downloads the model automatically</span></div>
+        <div class="code-line"><span class="code-cmd">sw</span></div>
+    </div>
+
+    <div style="margin-top: 3rem;">
+        <p style="color: var(--text-dim); font-size: 0.9rem;">Uses Ollama fallback? You don't even need llama-cpp-python.</p>
+        <div class="code-block" style="text-align: left; margin-top: 1rem;">
+            <button class="copy-btn" onclick="copyCode2()">Copy</button>
+            <div class="code-line"><span class="code-cmd">pip install</span> <span class="code-str">shellwise</span></div>
+            <div class="code-line"><span class="code-cmd">sw</span> <span class="code-str">"list files"</span></div>
+        </div>
+    </div>
+</section>
+
+<!-- ── FOOTER ──────────────────────────────────────────── -->
+<footer>
+    <div class="logo mono">sw</div>
+    <p>Built by <a href="https://eulogik.com" target="_blank" style="color: var(--cyan); text-decoration: none;">eulogik</a> with ❤ for developers who think in commands.</p>
+    <p style="margin-top: 1rem;">
+        <a href="https://github.com/gkishore2/Shellwise" target="_blank">GitHub</a>
+        &nbsp;&middot;&nbsp;
+        <a href="https://github.com/gkishore2/Shellwise/issues" target="_blank">Issues</a>
+        &nbsp;&middot;&nbsp;
+        <a href="https://github.com/gkishore2/Shellwise/blob/main/LICENSE" target="_blank">MIT License</a>
+    </p>
+</footer>
+
+<script>
+// ── Typing animation ─────────────────────────────────────
+const demos = [
+    { input: 'list files', output: 'Misc\nREADME.md\npyproject.toml\nshellwise/\ntests/' },
+    { input: 'du -sh *', output: '1.4M    Misc\n8.0K    README.md\n4.0K    pyproject.toml\n 80K    shellwise\n 44K    tests' },
+    { input: 'find all python files', output: 'shellwise/__init__.py\nshellwise/__main__.py\nshellwise/ai.py\nshellwise/core.py\nshellwise/executor.py' },
+    { input: 'show git log last 3', output: 'a1b2c3d fix: interactive mode stability\ne4f5g6h feat: local safety classifier\ni7j8k9l feat: response caching with TTL' },
+];
+
+const demoEl = document.getElementById('demo');
+let demoIndex = 0;
+let isTyping = false;
+
+async function typeText(el, text, speed = 40) {
+    for (const char of text) {
+        el.textContent += char;
+        await new Promise(r => setTimeout(r, speed));
+    }
+}
+
+async function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function runDemo() {
+    if (isTyping) return;
+    isTyping = true;
+    const demo = demos[demoIndex % demos.length];
+    demoIndex++;
+
+    // Clear
+    demoEl.innerHTML = '';
+    const prompt = document.createElement('div');
+    prompt.className = 'term-prompt';
+    prompt.textContent = '~/Code/MyProject (main) sw › ';
+    demoEl.appendChild(prompt);
+
+    // Type input
+    const inputSpan = document.createElement('span');
+    inputSpan.className = 'term-input';
+    prompt.appendChild(inputSpan);
+    await typeText(inputSpan, demo.input, 50);
+
+    await sleep(600);
+
+    // Show thinking
+    const thinking = document.createElement('div');
+    thinking.className = 'term-thinking';
+    thinking.textContent = '  thinking...';
+    demoEl.appendChild(thinking);
+    await sleep(1200);
+
+    // Replace thinking with output
+    demoEl.removeChild(thinking);
+    const output = document.createElement('div');
+    output.className = 'term-output';
+    output.textContent = demo.output;
+    demoEl.appendChild(output);
+
+    await sleep(2000);
+
+    // New prompt
+    const newPrompt = document.createElement('div');
+    newPrompt.className = 'term-prompt';
+    newPrompt.innerHTML = '~/Code/MyProject (main) sw › <span class="term-cursor"></span>';
+    demoEl.appendChild(newPrompt);
+
+    isTyping = false;
+    setTimeout(runDemo, 3000);
+}
+
+// Start demo loop
+setTimeout(runDemo, 1500);
+
+// ── Scroll animations ────────────────────────────────────
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+        }
+    });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+// ── Copy code ────────────────────────────────────────────
+function copyCode() {
+    navigator.clipboard.writeText('pip install "shellwise[cpu]"');
+    document.querySelector('.copy-btn').textContent = 'Copied!';
+    setTimeout(() => document.querySelector('.copy-btn').textContent = 'Copy', 2000);
+}
+function copyCode2() {
+    navigator.clipboard.writeText('pip install shellwise');
+    document.querySelectorAll('.copy-btn')[1].textContent = 'Copied!';
+    setTimeout(() => document.querySelectorAll('.copy-btn')[1].textContent = 'Copy', 2000);
+}
+
+// ── Smooth scroll ────────────────────────────────────────
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+        e.preventDefault();
+        const target = document.querySelector(a.getAttribute('href'));
+        if (target) target.scrollIntoView({ behavior: 'smooth' });
+    });
+});
+</script>
+
+</body>
+</html>
