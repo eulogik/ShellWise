@@ -2,6 +2,8 @@
 
 Local AI terminal co-pilot. Understands plain English and shell commands alike — and executes them safely.
 
+[![PyPI version](https://img.shields.io/pypi/v/shellwise)](https://pypi.org/project/shellwise/) [![License: MIT](https://img.shields.io/badge/License-MIT-cyan.svg)](https://github.com/eulogik/ShellWise/blob/main/LICENSE)
+
 By [eulogik](https://eulogik.com) · [Website](https://eulogik.github.io/ShellWise/) · [GitHub](https://github.com/eulogik/ShellWise)
 
 ```
