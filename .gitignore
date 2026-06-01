@@ -9,6 +9,7 @@ dist/
 build/
 eggs/
 *.whl
+*.tar.gz
 
 # Virtual environments
 .venv/
