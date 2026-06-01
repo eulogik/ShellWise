@@ -4,7 +4,7 @@ Local AI terminal co-pilot. Understands plain English and shell commands alike â
 
 <p align="center">
   <a href="https://pypi.org/project/shellwise/"><img src="https://img.shields.io/pypi/v/shellwise?color=cyan&label=PyPI&logo=pypi&logoColor=white" alt="PyPI"></a>
-  <a href="https://pypi.org/project/shellwise/"><img src="https://img.shields.io/pypi/pyversions/shellwise?color=cyan" alt="Python"></a>
+  <a href="https://pypi.org/project/shellwise/"><img src="https://img.shields.io/badge/python-3.9+-3776AB?logo=python&logoColor=white" alt="Python"></a>
   <a href="https://github.com/eulogik/ShellWise/blob/main/LICENSE"><img src="https://img.shields.io/pypi/l/shellwise?color=cyan" alt="License"></a>
 </p>
 
