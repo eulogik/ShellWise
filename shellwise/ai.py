@@ -4,11 +4,14 @@ Builds prompts, queries the model, parses responses.
 Injects rich system context (OS, distro, cwd, ls, git, pkg manager).
 """
 
+from __future__ import annotations
+
 import functools
 import json
 import os
 import platform
 import re
+import shutil
 import subprocess
 from pathlib import Path
 from . import model as mdl
@@ -130,12 +133,16 @@ BUILTIN_COMMANDS = {"cd", "exit", "export", "alias", "unalias", "source",
 
 
 def _command_exists(cmd: str) -> bool:
-    """Check if a command exists on PATH or is a shell builtin."""
+    """Check if a command exists on PATH or is a shell builtin.
+
+    Uses shutil.which (which is portable and doesn't depend on
+    `command` being a real binary — `command` is a shell builtin on
+    Linux but a real binary on macOS, so subprocess.run([...])
+    would raise FileNotFoundError on Ubuntu).
+    """
     if cmd.lower() in BUILTIN_COMMANDS:
         return True
-    return subprocess.run(
-        ["command", "-v", cmd], capture_output=True
-    ).returncode == 0
+    return shutil.which(cmd) is not None
 
 
 def should_execute_directly(text: str) -> bool:

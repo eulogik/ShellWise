@@ -343,7 +343,7 @@
 
 <!-- ── HERO ────────────────────────────────────────────── -->
 <section class="hero">
-    <div class="hero-badge mono"><span class="dot"></span> by <a href="https://eulogik.com" target="_blank" style="color: var(--cyan); text-decoration: none;">eulogik</a> &middot; v0.2.0 — Local safety classifier</div>
+    <div class="hero-badge mono"><span class="dot"></span> by <a href="https://eulogik.com" target="_blank" style="color: var(--cyan); text-decoration: none;">eulogik</a> &middot; v0.3.0 — Bundled binary, no install drama</div>
     <pre class="hero-ascii mono" aria-hidden="true">     ┌──────────────────────────────────────────────────────────┐
      │                                                          │
    ███████╗██╗  ██╗███████╗██╗     ██╗     ██╗    ██╗██╗███████╗███████╗
@@ -417,7 +417,7 @@
         <div class="feature-card fade-in">
             <div class="feature-icon cyan">📦</div>
             <h3>Fully Offline</h3>
-            <p>Runs via llama-cpp-python. No cloud, no API keys, no data leaves your machine.</p>
+            <p>Bundled llama-server binary. No cloud, no API keys, no data leaves your machine.</p>
         </div>
     </div>
 </section>
@@ -486,20 +486,20 @@
 
     <div class="code-block">
         <button class="copy-btn" onclick="copyCode()">Copy</button>
-        <div class="code-line"><span class="code-comment"># Install with CPU backend</span></div>
-        <div class="code-line"><span class="code-cmd">pip install</span> <span class="code-str">"shellwise[cpu]"</span></div>
-        <div class="code-line" style="margin-top: 1rem;"><span class="code-comment"># GPU (CUDA) — much faster</span></div>
-        <div class="code-line"><span class="code-cmd">CMAKE_ARGS</span>=<span class="code-str">"-DGGML_CUDA=on"</span> <span class="code-cmd">pip install</span> <span class="code-str">"shellwise[cpu]"</span></div>
-        <div class="code-line" style="margin-top: 1rem;"><span class="code-comment"># First run downloads the model automatically</span></div>
+        <div class="code-line"><span class="code-comment"># One command, no extras needed — bundled binary included</span></div>
+        <div class="code-line"><span class="code-cmd">pip install</span> <span class="code-str">shellwise</span></div>
+        <div class="code-line" style="margin-top: 1rem;"><span class="code-comment"># First run downloads the model automatically (~400 MB, one time)</span></div>
         <div class="code-line"><span class="code-cmd">sw</span></div>
     </div>
 
     <div style="margin-top: 3rem;">
-        <p style="color: var(--text-dim); font-size: 0.9rem;">Uses Ollama fallback? You don't even need llama-cpp-python.</p>
+        <p style="color: var(--text-dim); font-size: 0.9rem;">Prefer a different backend?</p>
         <div class="code-block" style="text-align: left; margin-top: 1rem;">
             <button class="copy-btn" onclick="copyCode2()">Copy</button>
-            <div class="code-line"><span class="code-cmd">pip install</span> <span class="code-str">shellwise</span></div>
-            <div class="code-line"><span class="code-cmd">sw</span> <span class="code-str">"list files"</span></div>
+            <div class="code-line"><span class="code-comment"># GPU (CUDA)</span></div>
+            <div class="code-line"><span class="code-cmd">CMAKE_ARGS</span>=<span class="code-str">"-DGGML_CUDA=on"</span> <span class="code-cmd">pip install</span> <span class="code-str">"shellwise[gpu]"</span></div>
+            <div class="code-line" style="margin-top: 0.75rem;"><span class="code-comment"># Or Ollama</span></div>
+            <div class="code-line"><span class="code-cmd">ollama</span> <span class="code-str">pull qwen2:0.5b</span> <span class="code-cmd">&amp;&amp;</span> <span class="code-cmd">sw</span></div>
         </div>
     </div>
 </section>

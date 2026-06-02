@@ -4,7 +4,7 @@ Local AI terminal co-pilot. Understands plain English and shell commands alike �
 
 <p align="center">
   <a href="https://pypi.org/project/shellwise/"><img src="https://img.shields.io/pypi/v/shellwise?color=cyan&label=PyPI&logo=pypi&logoColor=white" alt="PyPI"></a>
-  <a href="https://pypi.org/project/shellwise/"><img src="https://img.shields.io/badge/python-3.9+-3776AB?logo=python&logoColor=white" alt="Python"></a>
+  <a href="https://pypi.org/project/shellwise/"><img src="https://img.shields.io/badge/python-3.8+-3776AB?logo=python&logoColor=white" alt="Python"></a>
   <a href="https://github.com/eulogik/ShellWise/blob/main/LICENSE"><img src="https://img.shields.io/pypi/l/shellwise?color=cyan" alt="License"></a>
 </p>
 
@@ -22,7 +22,7 @@ By [eulogik](https://eulogik.com) · [Website](https://eulogik.github.io/ShellWi
      │                                                          │
      └──────────────────────────────────────────────────────────┘                                                                     
 
-  shellwise v0.2.0  —  your local AI terminal co-pilot
+  shellwise v0.3.0  —  your local AI terminal co-pilot
 ```
 
 ## Features
@@ -32,7 +32,7 @@ By [eulogik](https://eulogik.com) · [Website](https://eulogik.github.io/ShellWi
 - **Safety tiers** — read runs instantly; write asks Y/n; critical is locally blocked
 - **TUI detection** — vim, ssh, top etc. prompt to exit sw mode; ls, du, find run inline
 - **Context-aware** — knows your OS, distro, package manager, cwd, git branch, and directory contents
-- **Fully offline** — runs via llama-cpp-python, no cloud, no API keys
+- **Fully offline** — ships with bundled `llama-server` binary, no compilation, no Visual Studio, no Ollama required
 - **Response caching** — repeated queries served from cache with smart TTL
 - **Undo log** — write/critical commands logged to `~/.shellwise/undo.log`
 - **History** — all executed commands saved to `~/.shellwise/history`
@@ -44,11 +44,8 @@ By [eulogik](https://eulogik.com) · [Website](https://eulogik.github.io/ShellWi
 ## Install
 
 ```bash
-# 1. Install shellwise with the CPU backend
-pip install "shellwise[cpu]"
-
-# GPU (CUDA) — much faster on systems with a GPU
-CMAKE_ARGS="-DGGML_CUDA=on" pip install "shellwise[gpu]"
+# 1. Install (one command, no extras needed)
+pip install shellwise
 
 # 2. First run downloads the model automatically (~400 MB, one time)
 sw
@@ -57,18 +54,29 @@ sw
 sw install-shell
 ```
 
-The model (`qwen2.5-0.5b-instruct-q4_k_m.gguf`) downloads to `~/.shellwise/models/` on first use.
+That's it. `shellwise` ships with a bundled `llama-server` binary for macOS (arm64 + x64), Linux (x64), and Windows (x64). No Visual Studio, no CMake, no separate installer.
 
-### No llama-cpp-python? Use Ollama instead
+The model (`qwen2.5-0.5b-instruct-q4_k_m.gguf`) downloads to `~/.shellwise/models/` on first use, with resume support if the download is interrupted.
 
-shellwise automatically falls back to Ollama if llama-cpp-python isn't installed:
+### Alternative backends
+
+If you'd rather use a different inference stack:
 
 ```bash
+# Pure-Python backend (no bundled binary needed, but requires C++ build on some platforms)
+pip install "shellwise[cpu]"
+
+# GPU (CUDA) — much faster on systems with a GPU
+CMAKE_ARGS="-DGGML_CUDA=on" pip install "shellwise[gpu]"
+
+# Or use Ollama (no extra Python deps, separate daemon)
 curl -fsSL https://ollama.com/install.sh | sh
 ollama pull qwen2:0.5b
 pip install shellwise   # without [cpu]
 sw
 ```
+
+shellwise picks the first available backend in this order: **bundled binary → llama-cpp-python → Ollama**.
 
 ---
 
@@ -79,7 +87,7 @@ sw
 ```
 $ sw
 
-  shellwise v0.2.0  —  your local AI terminal co-pilot
+  shellwise v0.3.0  —  your local AI terminal co-pilot
 
   How to use:
   · type any shell command        → runs directly

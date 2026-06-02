@@ -11,6 +11,8 @@ Entry point. Handles:
   sw install-shell           → install shell integration
 """
 
+from __future__ import annotations
+
 import os
 import sys
 import argparse

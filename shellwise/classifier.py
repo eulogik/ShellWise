@@ -4,6 +4,8 @@ Local safety classification — independent of AI.
 READ/WRITE/CRITICAL + hard catastrophic blocker.
 """
 
+from __future__ import annotations
+
 import re
 
 CATASTROPHIC_PATTERNS = [

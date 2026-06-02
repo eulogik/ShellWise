@@ -56,6 +56,18 @@ class TestShouldExecuteDirectly:
     def test_empty_not_direct(self):
         assert ai.should_execute_directly("") is False
 
+    def test_works_when_command_binary_missing(self, mocker):
+        """Regression: on Ubuntu, `command` is a shell builtin, not a binary.
+        subprocess.run(['command', ...]) would raise FileNotFoundError.
+        We use shutil.which() now, which is portable.
+        """
+        # Simulate the old broken behaviour being impossible by patching
+        # shutil.which to confirm it's what's used (not subprocess).
+        mock_which = mocker.patch("shellwise.ai.shutil.which", return_value="/usr/bin/ls")
+        result = ai.should_execute_directly("ls -la")
+        assert result is True
+        mock_which.assert_called_with("ls")
+
 
 class TestStripAiPrefix:
     def test_ai_prefix_stripped(self):

@@ -3,6 +3,8 @@ shellwise.display
 All terminal output — banner, colors, command display, confirmations.
 """
 
+from __future__ import annotations
+
 import sys
 import os
 import shutil

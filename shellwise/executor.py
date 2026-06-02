@@ -7,6 +7,8 @@ Runs shell commands, streams output, handles special cases:
   - safe execution: arg arrays for simple commands, shell for pipes/globs
 """
 
+from __future__ import annotations
+
 import fcntl
 import os
 import re

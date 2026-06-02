@@ -10,6 +10,8 @@ Features:
 - Error recovery (never crashes the loop)
 """
 
+from __future__ import annotations
+
 import json
 import os
 from . import ai, display, executor, classifier
