@@ -431,8 +431,8 @@
     <div class="steps">
         <div class="step fade-in">
             <h3>Install</h3>
-            <p class="mono" style="color: var(--cyan); font-size: 0.85rem;">pip install "shellwise[cpu]"</p>
-            <p style="margin-top: 0.5rem;">One command. Downloads the model on first run (~400 MB, one time).</p>
+            <p class="mono" style="color: var(--cyan); font-size: 0.85rem;">pip install shellwise</p>
+            <p style="margin-top: 0.5rem;">One command, no extras. Downloads the model on first run (~400 MB, one time).</p>
         </div>
         <div class="step fade-in">
             <h3>Type naturally</h3>
@@ -523,7 +523,7 @@ const demos = [
     { input: 'list files', output: 'Misc\nREADME.md\npyproject.toml\nshellwise/\ntests/' },
     { input: 'du -sh *', output: '1.4M    Misc\n8.0K    README.md\n4.0K    pyproject.toml\n 80K    shellwise\n 44K    tests' },
     { input: 'find all python files', output: 'shellwise/__init__.py\nshellwise/__main__.py\nshellwise/ai.py\nshellwise/core.py\nshellwise/executor.py' },
-    { input: 'show git log last 3', output: 'a1b2c3d fix: interactive mode stability\ne4f5g6h feat: local safety classifier\ni7j8k9l feat: response caching with TTL' },
+    { input: 'show git log last 3', output: 'ff1ab15 feat: bundle llama-server binary\n793575d fix: use static Python badge\ncf3abae fix: use shields.io for all badges' },
 ];
 
 const demoEl = document.getElementById('demo');
@@ -602,7 +602,7 @@ document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
 
 // ── Copy code ────────────────────────────────────────────
 function copyCode() {
-    navigator.clipboard.writeText('pip install "shellwise[cpu]"');
+    navigator.clipboard.writeText('pip install shellwise');
     document.querySelector('.copy-btn').textContent = 'Copied!';
     setTimeout(() => document.querySelector('.copy-btn').textContent = 'Copy', 2000);
 }
